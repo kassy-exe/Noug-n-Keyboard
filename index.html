@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>NougÆn Keyboard</title>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+  :root{
+    --bg: #0e0c0a;
+    --surface: #1c1916;
+    --surface-2: #262220;
+    --border: #38332e;
+    --text: #ece7de;
+    --text-dim: #a39a8c;
+    --accent: #c9a24d;
+    --accent-dim: #8a7638;
+    --glow: rgba(201,162,77,0.55);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Hiragino Sans", sans-serif;
+  }
+  body {
+    background-image: radial-gradient(circle at 50% 30%, var(--glow-op, transparent) 0%, transparent 60%);
+    transition: background-image 0.25s ease-out;
+  }
+  body.flash {
+    --glow-op: rgba(201,162,77,0.28);
+  }
+  .wrap {
+    max-width: 520px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  header {
+    text-align: center;
+    line-height: 1;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 0;
+    color: var(--accent);
+    display: inline;
+  }
+  header .tag {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    margin-left: 6px;
+  }
+  #copyStatus {
+    text-align: center;
+    font-size: 13px;
+    color: var(--accent);
+    height: 18px;
+    line-height: 18px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  #copyStatus.show { opacity: 1; }
+  #copyStatus .char {
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    margin: 0 2px;
+  }
+  .keyboard-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .keys {
+    display: grid;
+    gap: 8px;
+  }
+  #specialKeys {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  #numberKeys {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .key {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--accent);
+    font-size: 28px;
+    font-weight: 600;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+  }
+  .key:active { background: var(--accent-dim); box-shadow: 0 0 16px var(--glow); }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 6px 0;
+  }
+  .calc-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .mode-toggle {
+    display: flex;
+    gap: 6px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .mode-btn.active {
+    background: var(--accent);
+    color: #1c1602;
+    border-color: var(--accent);
+  }
+  .calc-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .calc-display .from {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .calc-display .to {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    min-height: 32px;
+    word-break: break-all;
+  }
+  #decimalInput {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--text);
+    font-size: 20px;
+    text-align: center;
+    outline: none;
+  }
+  .base12-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 24px;
+    font-size: 20px;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+  .base12-input:empty::before {
+    content: "0";
+    color: #57504a;
+  }
+  .calc-keys {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .calc-key {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 18px;
+    font-weight: 600;
+    padding: 10px 0;
+  }
+  .calc-key:active { background: var(--accent-dim); }
+  .calc-key.clear-key { color: var(--text-dim); font-size: 13px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>NougÆn</h1><span class="tag">KEYBOARD</span>
+  </header>
+
+  <div id="copyStatus">タップした文字がコピーされるで</div>
+
+  <div class="keyboard-area">
+    <div class="section-label">特殊文字</div>
+    <div class="keys" id="specialKeys"></div>
+    <div class="section-label">数字</div>
+    <div class="keys" id="numberKeys"></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="calc-area">
+    <div class="section-label">12進数電卓</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="modeToBase12">10進→12進</button>
+      <button class="mode-btn" id="modeToBase10">12進→10進</button>
+    </div>
+
+    <div id="toBase12Panel">
+      <input type="number" inputmode="numeric" id="decimalInput" placeholder="10進数を入力">
+      <div class="calc-display" style="margin-top:10px;">
+        <div class="from">12進数</div>
+        <div class="to" id="base12Result">—</div>
+      </div>
+    </div>
+
+    <div id="toBase10Panel" class="hidden">
+      <div class="base12-input" id="base12Input"></div>
+      <div class="calc-keys" id="calcKeys" style="margin-top:8px;"></div>
+      <div class="calc-display" style="margin-top:10px;">
+        <div class="from">10進数</div>
+        <div class="to" id="base10Result">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const specialChars = ['Æ','æ','Þ','þ','ð','ø','Đ','đ'];
+const numberChars = ['0','1','2','3','4','5','6','7','8','9','Ƨ','Ɛ'];
+const statusEl = document.getElementById('copyStatus');
+let statusTimer = null;
+
+async function copyChar(ch) {
+  if (navigator.vibrate) navigator.vibrate(8);
+  document.body.classList.add('flash');
+  clearTimeout(copyChar._t);
+  copyChar._t = setTimeout(() => document.body.classList.remove('flash'), 140);
+
+  try {
+    await navigator.clipboard.writeText(ch);
+  } catch (e) {
+    const temp = document.createElement('textarea');
+    temp.value = ch;
+    temp.style.position = 'fixed';
+    temp.style.opacity = '0';
+    document.body.appendChild(temp);
+    temp.focus();
+    temp.select();
+    document.execCommand('copy');
+    document.body.removeChild(temp);
+  }
+
+  statusEl.innerHTML = '<span class="char">' + ch + '</span> をコピーしたで';
+  statusEl.classList.add('show');
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => statusEl.classList.remove('show'), 1400);
+}
+
+function buildKeys(container, chars) {
+  chars.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'key';
+    btn.textContent = ch;
+    btn.addEventListener('click', () => copyChar(ch));
+    container.appendChild(btn);
+  });
+}
+
+buildKeys(document.getElementById('specialKeys'), specialChars);
+buildKeys(document.getElementById('numberKeys'), numberChars);
+
+// --- 12進数電卓 ---
+const DIGITS = '0123456789ƧƐ';
+
+function toBase12(n) {
+  if (!Number.isFinite(n) || n < 0) return '—';
+  n = Math.floor(n);
+  if (n === 0) return '0';
+  let out = '';
+  while (n > 0) {
+    out = DIGITS[n % 12] + out;
+    n = Math.floor(n / 12);
+  }
+  return out;
+}
+
+function fromBase12(str) {
+  if (!str) return null;
+  let total = 0;
+  for (const ch of str) {
+    const v = DIGITS.indexOf(ch);
+    if (v === -1 || v > 11) return null;
+    total = total * 12 + v;
+  }
+  return total;
+}
+
+const modeToBase12Btn = document.getElementById('modeToBase12');
+const modeToBase10Btn = document.getElementById('modeToBase10');
+const toBase12Panel = document.getElementById('toBase12Panel');
+const toBase10Panel = document.getElementById('toBase10Panel');
+
+modeToBase12Btn.addEventListener('click', () => {
+  modeToBase12Btn.classList.add('active');
+  modeToBase10Btn.classList.remove('active');
+  toBase12Panel.classList.remove('hidden');
+  toBase10Panel.classList.add('hidden');
+});
+modeToBase10Btn.addEventListener('click', () => {
+  modeToBase10Btn.classList.add('active');
+  modeToBase12Btn.classList.remove('active');
+  toBase10Panel.classList.remove('hidden');
+  toBase12Panel.classList.add('hidden');
+});
+
+const decimalInput = document.getElementById('decimalInput');
+const base12Result = document.getElementById('base12Result');
+decimalInput.addEventListener('input', () => {
+  const n = parseInt(decimalInput.value, 10);
+  base12Result.textContent = decimalInput.value === '' ? '—' : toBase12(n);
+});
+
+const base12InputEl = document.getElementById('base12Input');
+const base10Result = document.getElementById('base10Result');
+let base12Str = '';
+
+function renderBase12() {
+  base12InputEl.textContent = base12Str;
+  const dec = fromBase12(base12Str);
+  base10Result.textContent = dec === null ? '—' : dec;
+}
+
+const calcKeysContainer = document.getElementById('calcKeys');
+[...DIGITS].forEach(ch => {
+  const btn = document.createElement('button');
+  btn.className = 'calc-key';
+  btn.textContent = ch;
+  btn.addEventListener('click', () => {
+    if (navigator.vibrate) navigator.vibrate(8);
+    base12Str += ch;
+    renderBase12();
+  });
+  calcKeysContainer.appendChild(btn);
+});
+const clearBtn = document.createElement('button');
+clearBtn.className = 'calc-key clear-key';
+clearBtn.textContent = '⌫';
+clearBtn.addEventListener('click', () => {
+  if (navigator.vibrate) navigator.vibrate(8);
+  base12Str = base12Str.slice(0, -1);
+  renderBase12();
+});
+calcKeysContainer.appendChild(clearBtn);
+</script>
+</body>
+</html>
